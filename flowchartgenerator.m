@@ -112,7 +112,7 @@ title('Detected Lines');
 
 lines = houghlines(edge_BW, theta, rho, peaks);
 
-best_angle = mode([lines.theta]);
+best_angle = mode([lines.theta])+90;
 im_rot = imrotate(BW2, best_angle);
 imf_rot = imrotate(imf, best_angle);
 figure;
@@ -126,7 +126,7 @@ imwrite(imf_rot, 'Outputs/RotatedFilledImage.jpg');
 
 %% Decomposition
 
-se = strel('diamond', 2);
+se = strel('diamond', 4);
 eroded = imopen(imf_rot, se);
 % figure;
 % imshow(eroded);
@@ -138,7 +138,7 @@ bw = bwareaopen(eroded, 50);
 shps = im_rot - bw;
 % figure, imshow(shps);
 shps = imbinarize(shps);
-bw3 = bwareaopen(shps, 10);
+bw3 = bwareaopen(shps, 20);
 figure, imshow(bw3);
 title('Only Arrows');
 imwrite(bw3, 'Outputs/Arrows.jpg');
