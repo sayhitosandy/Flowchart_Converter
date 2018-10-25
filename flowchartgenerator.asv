@@ -4,7 +4,7 @@ clc
 clear
 
 %% Initialize files and folders
-n = '6'; %Input Image Number
+n = '1'; %Input Image Number
 inpfil = strcat(n, '.jpg'); %Input File
 inpfold = './Inputs'; %Input Folder
 outfold = strcat('./Outputs/', n); %Output Folder
@@ -24,6 +24,7 @@ nrows = nrows/10;
 ncols = ncols/10;
 % r = nrows/ncols; %Ratio
 im = imresize(im, [nrows, ncols]); %Reduce to 1/10th
+% im = imresize(im, [nrows/r, ncols*r]); %Reduce to 1/10th
 figure;
 imshow(im);
 title('Grayscaled and Resized Image');
@@ -55,13 +56,13 @@ outpath = fullfile(outfold, outfil);
 imwrite(im, outpath);
 
 %% Display diff regions in image
-% [rgn, n] = bwlabel(im);
-% figure;
-% imagesc(rgn); axis equal;
-% title('Image Regions');
-% outfil = 'ImageRegions.jpg';
-% outpath = fullfile(outfold, outfil);
-% imwrite(im, outpath);
+[rgn, n] = bwlabel(im);
+figure;
+imagesc(rgn); axis equal;
+title('Image Regions');
+outfil = 'ImageRegions.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(rgn, outpath);
 
 %% Remove noise
 CC = bwconncomp(im);
@@ -74,7 +75,7 @@ imshow(BW2);
 title('Image Cleaned');
 outfil = 'CleanedImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(BW2, outpath);
 
 %% Image Fill
 imf = imfill(BW2, 'holes');
@@ -154,26 +155,21 @@ imwrite(im, outpath);
 
 %% Decomposition into arrows and shapes
 
-se = strel('diamond', 5); %
-eroded = imopen(imf_rot, se);
-% figure;
-% imshow(eroded);
-% title('Remove Arrows');
-
-bw = bwareaopen(eroded, 50);
+se = strel('diamond', 5); %Diamond shaped kernel
+filt = imopen(imf_rot, se); %Open Filter
+bw = bwareaopen(filt, 50); %Remove arrows
 % figure, imshow(bw);
+arrs = im_rot - bw; %Remove shapes (Only arrows)
+arrs = imbinarize(arrs);
 
-shps = im_rot - bw;
-% figure, imshow(shps);
-shps = imbinarize(shps);
-bw3 = bwareaopen(shps, 20);
+bw3 = bwareaopen(arrs, 20); %Remove noise
 figure, imshow(bw3);
 title('Only Arrows');
 outfil = 'Arrows.jpg';
 outpath = fullfile(outfold, outfil);
 imwrite(im, outpath);
 
-shps = im_rot - bw3;
+shps = im_rot - bw3; %Only shapes
 figure;
 imshow(shps);
 title('Only Shapes');

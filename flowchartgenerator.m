@@ -24,6 +24,7 @@ nrows = nrows/10;
 ncols = ncols/10;
 % r = nrows/ncols; %Ratio
 im = imresize(im, [nrows, ncols]); %Reduce to 1/10th
+% im = imresize(im, [nrows/r, ncols*r]); %Reduce to 1/10th
 figure;
 imshow(im);
 title('Grayscaled and Resized Image');
@@ -61,7 +62,7 @@ imwrite(im, outpath);
 % title('Image Regions');
 % outfil = 'ImageRegions.jpg';
 % outpath = fullfile(outfold, outfil);
-% imwrite(im, outpath);
+% imwrite(rgn, outpath);
 
 %% Remove noise
 CC = bwconncomp(im);
@@ -74,7 +75,7 @@ imshow(BW2);
 title('Image Cleaned');
 outfil = 'CleanedImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(BW2, outpath);
 
 %% Image Fill
 imf = imfill(BW2, 'holes');
@@ -83,7 +84,7 @@ imshow(imf);
 title('Filled Image');
 outfil = 'FilledImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(imf, outpath);
 
 %% Edge Detection
 edge_BW = edge(imf, 'zerocross');
@@ -92,7 +93,7 @@ imshow(edge_BW);
 title('Edge Detection');
 outfil = 'EdgeDetection.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(edge_BW, outpath);
 
 %% Hough Transform (In-built)
 % angle = horizon(imf);
@@ -143,14 +144,14 @@ imshow(im_rot);
 title('Rotated Image');
 outfil = 'RotatedImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(im_rot, outpath);
 
 figure;
 imshow(imf_rot);
 title('Filled Image');
 outfil = 'RotatedFilledImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(imf_rot, outpath);
 
 %% Decomposition into arrows and shapes
 
@@ -166,7 +167,7 @@ figure, imshow(bw3);
 title('Only Arrows');
 outfil = 'Arrows.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(bw3, outpath);
 
 shps = im_rot - bw3; %Only shapes
 figure;
@@ -174,4 +175,4 @@ imshow(shps);
 title('Only Shapes');
 outfil = 'Shapes.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(shps, outpath);
