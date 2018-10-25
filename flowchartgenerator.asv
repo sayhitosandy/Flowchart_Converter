@@ -3,8 +3,8 @@ close all
 clc
 clear
 
-%% Initialize files and folders
-n = '6'; %Input Image Number
+%% Init
+n = '5'; %Input Image Number
 inpfil = strcat(n, '.jpg'); %Input File
 inpfold = './Inputs'; %Input Folder
 outfold = strcat('./Outputs/', n); %Output Folder
@@ -50,18 +50,14 @@ im = 1-im;
 figure;
 imshow(im);
 title('Inverted Image');
-outfil = 'InvertedImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(im, 'Outputs/InvertedImage.jpg');
 
 %% Display diff regions in image
 [rgn, n] = bwlabel(im);
 figure;
 imagesc(rgn); axis equal;
 title('Image Regions');
-outfil = 'ImageRegions.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(rgn, 'Outputs/' + ImageRegions.jpg');
 
 %% Remove noise
 CC = bwconncomp(im);
@@ -72,27 +68,21 @@ BW2 = ismember(L, find([S.Area] >= 50*nrows/100));
 figure;
 imshow(BW2);
 title('Image Cleaned');
-outfil = 'CleanedImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(BW2, 'Outputs/CleanedImage.jpg');
 
 %% Image Fill
 imf = imfill(BW2, 'holes');
 figure;
 imshow(imf);
 title('Filled Image');
-outfil = 'FilledImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(imf, 'Outputs/FilledImage.jpg');
 
 %% Edge Detection
 edge_BW = edge(imf, 'zerocross');
 figure;
 imshow(edge_BW);
 title('Edge Detection');
-outfil = 'EdgeDetection.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(edge_BW, 'Outputs/EdgeDetection.jpg');
 
 %% Hough Transform (In-built)
 % angle = horizon(imf);
@@ -140,16 +130,11 @@ imf_rot = imrotate(imf, best_angle);
 figure;
 imshow(im_rot);
 title('Rotated Image');
-outfil = 'RotatedImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
-
+imwrite(im_rot, 'Outputs/RotatedImage.jpg');
 figure;
 imshow(imf_rot);
 title('Filled Image');
-outfil = 'RotatedFilledImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(imf_rot, 'Outputs/RotatedFilledImage.jpg');
 
 %% Decomposition
 
@@ -168,14 +153,10 @@ shps = imbinarize(shps);
 bw3 = bwareaopen(shps, 20);
 figure, imshow(bw3);
 title('Only Arrows');
-outfil = 'Arrows.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(bw3, 'Outputs/Arrows.jpg');
 
 shps = im_rot - bw3;
 figure;
 imshow(shps);
 title('Only Shapes');
-outfil = 'Shapes.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(shps, 'Outputs/Shapes.jpg');
