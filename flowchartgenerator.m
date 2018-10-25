@@ -1,10 +1,10 @@
-%%
+%% Init
 close all
 clc
 clear
 
 %% Read Image
-im = imread('input1.jpg');
+im = imread('Inputs/input4big.jpg');
 figure;
 imshow(im);
 title('Original Image');
@@ -13,7 +13,7 @@ title('Original Image');
 im = rgb2gray(im);
 [nrows, ncols] = size(im);
 r = nrows/ncols;
-im = imresize(im, [nrows/r, ncols*r]);
+im = imresize(im, [nrows, ncols]/10);
 figure;
 imshow(im);
 title('Grayscaled and Resized Image');
@@ -25,20 +25,20 @@ title('Grayscaled and Resized Image');
 
 %% Adaptive Thresholding
 T = adaptthresh(im, 0.4, 'ForegroundPolarity','dark');
-% figure;
-% imagesc(T);
+figure;
+imagesc(T);
 im = imbinarize(im,T);
 figure;
 imshow(im);
 title('Binary Image');
-imwrite(im, 'BinaryImage.jpg');
+imwrite(im, './Outputs/BinaryImage.jpg');
 
 %% Bitwise Inversion
 im = 1-im;
 figure;
 imshow(im);
 title('Inverted Image');
-imwrite(im, 'InvertedImage.jpg');
+imwrite(im, 'Outputs/InvertedImage.jpg');
 
 %% Display diff regions in image
 % [rgn, n] = bwlabel(im);
@@ -56,21 +56,21 @@ BW2 = ismember(L, find([S.Area] >= 50*nrows/100));
 figure;
 imshow(BW2);
 title('Image Cleaned');
-imwrite(BW2, 'CleanedImage.jpg');
+imwrite(BW2, 'Outputs/CleanedImage.jpg');
 
 %% Image Fill
 imf = imfill(BW2, 'holes');
 figure;
 imshow(imf);
 title('Filled Image');
-imwrite(imf, 'FilledImage.jpg');
+imwrite(imf, 'Outputs/FilledImage.jpg');
 
 %% Edge Detection
 edge_BW = edge(imf, 'zerocross');
 figure;
 imshow(edge_BW);
 title('Edge Detection');
-imwrite(edge_BW, 'EdgeDetection.jpg');
+imwrite(edge_BW, 'Outputs/EdgeDetection.jpg');
 
 %% Hough Transform (In-built)
 % angle = horizon(imf);
@@ -112,17 +112,17 @@ title('Detected Lines');
 
 lines = houghlines(edge_BW, theta, rho, peaks);
 
-best_angle = mode([lines.theta])+90;
+best_angle = mode([lines.theta]);
 im_rot = imrotate(BW2, best_angle);
 imf_rot = imrotate(imf, best_angle);
 figure;
 imshow(im_rot);
 title('Rotated Image');
-imwrite(im_rot, 'RotatedImage.jpg');
+imwrite(im_rot, 'Outputs/RotatedImage.jpg');
 figure;
 imshow(imf_rot);
 title('Filled Image');
-imwrite(imf_rot, 'RotatedFilledImage.jpg');
+imwrite(imf_rot, 'Outputs/RotatedFilledImage.jpg');
 
 %% Decomposition
 
@@ -141,10 +141,10 @@ shps = imbinarize(shps);
 bw3 = bwareaopen(shps, 10);
 figure, imshow(bw3);
 title('Only Arrows');
-imwrite(bw3, 'Arrows.jpg');
+imwrite(bw3, 'Outputs/Arrows.jpg');
 
 shps = im_rot - bw3;
 figure;
 imshow(shps);
 title('Only Shapes');
-imwrite(shps, 'Shapes.jpg');
+imwrite(shps, 'Outputs/Shapes.jpg');
