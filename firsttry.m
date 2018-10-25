@@ -124,4 +124,27 @@ imshow(imf_rot);
 title('Filled Image');
 imwrite(imf_rot, 'RotatedFilledImage.jpg');
 
-%% 
+%% Decomposition
+
+se = strel('diamond', 2);
+eroded = imopen(imf_rot, se);
+% figure;
+% imshow(eroded);
+% title('Remove Arrows');
+
+bw = bwareaopen(eroded, 50);
+% figure, imshow(bw);
+
+shps = im_rot - bw;
+% figure, imshow(shps);
+shps = imbinarize(shps);
+bw3 = bwareaopen(shps, 10);
+figure, imshow(bw3);
+title('Only Arrows');
+imwrite(bw3, 'Arrows.jpg');
+
+shps = im_rot - bw3;
+figure;
+imshow(shps);
+title('Only Shapes');
+imwrite(shps, 'Shapes.jpg');
