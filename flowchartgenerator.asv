@@ -3,27 +3,27 @@ close all
 clc
 clear
 
-%% Init
-n = '5'; %Input Image Number
+%% Initialize files and folders
+n = '6'; %Input Image Number
 inpfil = strcat(n, '.jpg'); %Input File
 inpfold = './Inputs'; %Input Folder
 outfold = strcat('./Outputs/', n); %Output Folder
 inppath = fullfile(inpfold, inpfil); %Input Path 
-mkdir(outfold);
+mkdir(outfold); %Create new output folder
 
 %% Read Image
-im = imread(inppath);
+im = imread(inppath); 
 figure;
 imshow(im);
 title('Original Image');
 
 %% Convert to grayscale and resize
 im = rgb2gray(im);
-[nrows, ncols] = size(im);
-nrows = nrows/10;
+[nrows, ncols] = size(im); %Image size
+nrows = nrows/10; 
 ncols = ncols/10;
-% r = nrows/ncols;
-im = imresize(im, [nrows, ncols]);
+% r = nrows/ncols; %Ratio
+im = imresize(im, [nrows, ncols]); %Reduce to 1/10th
 figure;
 imshow(im);
 title('Grayscaled and Resized Image');
@@ -33,11 +33,11 @@ title('Grayscaled and Resized Image');
 % figure;
 % imshow(im);
 
-%% Adaptive Thresholding
-T = adaptthresh(im, 0.3, 'ForegroundPolarity','dark');
+%% Adaptive Thresholding and Binarization
+T = adaptthresh(im, 0.3, 'ForegroundPolarity','dark'); %Adaptive Thresholding
 figure;
 imagesc(T);
-im = imbinarize(im,T);
+im = imbinarize(im,T); %Binarization
 figure;
 imshow(im);
 title('Binary Image');
@@ -50,39 +50,49 @@ im = 1-im;
 figure;
 imshow(im);
 title('Inverted Image');
-imwrite(im, 'Outputs/InvertedImage.jpg');
+outfil = 'InvertedImage.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);
 
 %% Display diff regions in image
-[rgn, n] = bwlabel(im);
-figure;
-imagesc(rgn); axis equal;
-title('Image Regions');
-imwrite(rgn, 'Outputs/' + ImageRegions.jpg');
+% [rgn, n] = bwlabel(im);
+% figure;
+% imagesc(rgn); axis equal;
+% title('Image Regions');
+% outfil = 'ImageRegions.jpg';
+% outpath = fullfile(outfold, outfil);
+% imwrite(im, outpath);
 
 %% Remove noise
 CC = bwconncomp(im);
 S = regionprops(CC, 'Area');
 L = labelmatrix(CC);
-BW2 = ismember(L, find([S.Area] >= 50*nrows/100));
+BW2 = ismember(L, find([S.Area] >= 50*nrows/100)); %Keep only those regions which are of area more than specified
 % bw = bwareaopen(im, 50);
 figure;
 imshow(BW2);
 title('Image Cleaned');
-imwrite(BW2, 'Outputs/CleanedImage.jpg');
+outfil = 'CleanedImage.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);
 
 %% Image Fill
 imf = imfill(BW2, 'holes');
 figure;
 imshow(imf);
 title('Filled Image');
-imwrite(imf, 'Outputs/FilledImage.jpg');
+outfil = 'FilledImage.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);
 
 %% Edge Detection
 edge_BW = edge(imf, 'zerocross');
 figure;
 imshow(edge_BW);
 title('Edge Detection');
-imwrite(edge_BW, 'Outputs/EdgeDetection.jpg');
+outfil = 'EdgeDetection.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);
 
 %% Hough Transform (In-built)
 % angle = horizon(imf);
@@ -91,8 +101,8 @@ imwrite(edge_BW, 'Outputs/EdgeDetection.jpg');
 % imshow(rot);
 
 %% Hough Transform
-[H,theta,rho] = hough(edge_BW);
-peaks = houghpeaks(H, 100);
+[H,theta,rho] = hough(edge_BW); %Hough Transform
+peaks = houghpeaks(H, 100); %Peaks in hough transform
 
 figure;
 imshow(H,[],'XData',theta,'YData',rho,'InitialMagnification','fit');
@@ -102,7 +112,7 @@ plot(theta(peaks(:,2)),rho(peaks(:,1)),'s','color','white');
 colormap(gca, hot);
 title('Hough Transform Plot');
 
-lines = houghlines(edge_BW,theta,rho,peaks,'FillGap',5,'MinLength',2);
+lines = houghlines(edge_BW,theta,rho,peaks,'FillGap',5,'MinLength',2); 
 figure, imshow(BW2), hold on
 max_len = 0;
 for k = 1:length(lines)
@@ -122,23 +132,29 @@ for k = 1:length(lines)
 end
 title('Detected Lines');
 
+%% Find Best Angle and rotate
 lines = houghlines(edge_BW, theta, rho, peaks);
 
-best_angle = mode([lines.theta])+90;
-im_rot = imrotate(BW2, best_angle);
+best_angle = mode([lines.theta])+90; %Most common angle among all lines
+im_rot = imrotate(BW2, best_angle); %Rotate wrt angle 
 imf_rot = imrotate(imf, best_angle);
 figure;
 imshow(im_rot);
 title('Rotated Image');
-imwrite(im_rot, 'Outputs/RotatedImage.jpg');
+outfil = 'RotatedImage.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);
+
 figure;
 imshow(imf_rot);
 title('Filled Image');
-imwrite(imf_rot, 'Outputs/RotatedFilledImage.jpg');
+outfil = 'RotatedFilledImage.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);
 
-%% Decomposition
+%% Decomposition into arrows and shapes
 
-se = strel('diamond', 5);
+se = strel('diamond', 5); %
 eroded = imopen(imf_rot, se);
 % figure;
 % imshow(eroded);
@@ -153,10 +169,14 @@ shps = imbinarize(shps);
 bw3 = bwareaopen(shps, 20);
 figure, imshow(bw3);
 title('Only Arrows');
-imwrite(bw3, 'Outputs/Arrows.jpg');
+outfil = 'Arrows.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);
 
 shps = im_rot - bw3;
 figure;
 imshow(shps);
 title('Only Shapes');
-imwrite(shps, 'Outputs/Shapes.jpg');
+outfil = 'Shapes.jpg';
+outpath = fullfile(outfold, outfil);
+imwrite(im, outpath);

@@ -9,21 +9,21 @@ inpfil = strcat(n, '.jpg'); %Input File
 inpfold = './Inputs'; %Input Folder
 outfold = strcat('./Outputs/', n); %Output Folder
 inppath = fullfile(inpfold, inpfil); %Input Path 
-mkdir(outfold);
+mkdir(outfold); %Create new output folder
 
 %% Read Image
-im = imread(inppath);
+im = imread(inppath); 
 figure;
 imshow(im);
 title('Original Image');
 
 %% Convert to grayscale and resize
 im = rgb2gray(im);
-[nrows, ncols] = size(im);
-nrows = nrows/10;
+[nrows, ncols] = size(im); %Image size
+nrows = nrows/10; 
 ncols = ncols/10;
-% r = nrows/ncols;
-im = imresize(im, [nrows, ncols]);
+% r = nrows/ncols; %Ratio
+im = imresize(im, [nrows, ncols]); %Reduce to 1/10th
 figure;
 imshow(im);
 title('Grayscaled and Resized Image');
@@ -33,11 +33,11 @@ title('Grayscaled and Resized Image');
 % figure;
 % imshow(im);
 
-%% Adaptive Thresholding
-T = adaptthresh(im, 0.3, 'ForegroundPolarity','dark');
+%% Adaptive Thresholding and Binarization
+T = adaptthresh(im, 0.3, 'ForegroundPolarity','dark'); %Adaptive Thresholding
 figure;
 imagesc(T);
-im = imbinarize(im,T);
+im = imbinarize(im,T); %Binarization
 figure;
 imshow(im);
 title('Binary Image');
@@ -55,19 +55,19 @@ outpath = fullfile(outfold, outfil);
 imwrite(im, outpath);
 
 %% Display diff regions in image
-[rgn, n] = bwlabel(im);
-figure;
-imagesc(rgn); axis equal;
-title('Image Regions');
-outfil = 'ImageRegions.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+% [rgn, n] = bwlabel(im);
+% figure;
+% imagesc(rgn); axis equal;
+% title('Image Regions');
+% outfil = 'ImageRegions.jpg';
+% outpath = fullfile(outfold, outfil);
+% imwrite(im, outpath);
 
 %% Remove noise
 CC = bwconncomp(im);
 S = regionprops(CC, 'Area');
 L = labelmatrix(CC);
-BW2 = ismember(L, find([S.Area] >= 50*nrows/100));
+BW2 = ismember(L, find([S.Area] >= 50*nrows/100)); %Keep only those regions which are of area more than specified
 % bw = bwareaopen(im, 50);
 figure;
 imshow(BW2);
@@ -101,8 +101,8 @@ imwrite(im, outpath);
 % imshow(rot);
 
 %% Hough Transform
-[H,theta,rho] = hough(edge_BW);
-peaks = houghpeaks(H, 100);
+[H,theta,rho] = hough(edge_BW); %Hough Transform
+peaks = houghpeaks(H, 100); %Peaks in hough transform
 
 figure;
 imshow(H,[],'XData',theta,'YData',rho,'InitialMagnification','fit');
@@ -112,7 +112,7 @@ plot(theta(peaks(:,2)),rho(peaks(:,1)),'s','color','white');
 colormap(gca, hot);
 title('Hough Transform Plot');
 
-lines = houghlines(edge_BW,theta,rho,peaks,'FillGap',5,'MinLength',2);
+lines = houghlines(edge_BW,theta,rho,peaks,'FillGap',5,'MinLength',2); 
 figure, imshow(BW2), hold on
 max_len = 0;
 for k = 1:length(lines)
@@ -132,10 +132,11 @@ for k = 1:length(lines)
 end
 title('Detected Lines');
 
+%% Find Best Angle and rotate
 lines = houghlines(edge_BW, theta, rho, peaks);
 
-best_angle = mode([lines.theta])+90;
-im_rot = imrotate(BW2, best_angle);
+best_angle = mode([lines.theta])+90; %Most common angle among all lines
+im_rot = imrotate(BW2, best_angle); %Rotate wrt angle 
 imf_rot = imrotate(imf, best_angle);
 figure;
 imshow(im_rot);
@@ -151,28 +152,23 @@ outfil = 'RotatedFilledImage.jpg';
 outpath = fullfile(outfold, outfil);
 imwrite(im, outpath);
 
-%% Decomposition
+%% Decomposition into arrows and shapes
 
-se = strel('diamond', 5);
-eroded = imopen(imf_rot, se);
-% figure;
-% imshow(eroded);
-% title('Remove Arrows');
-
-bw = bwareaopen(eroded, 50);
+se = strel('diamond', 5); %Diamond shaped kernel
+filt = imopen(imf_rot, se); %Open Filter
+bw = bwareaopen(filt, 50); %Remove arrows
 % figure, imshow(bw);
+arrs = im_rot - bw; %Remove shapes (Only arrows)
+arrs = imbinarize(arrs);
 
-shps = im_rot - bw;
-% figure, imshow(shps);
-shps = imbinarize(shps);
-bw3 = bwareaopen(shps, 20);
+bw3 = bwareaopen(arrs, 20); %Remove noise
 figure, imshow(bw3);
 title('Only Arrows');
 outfil = 'Arrows.jpg';
 outpath = fullfile(outfold, outfil);
 imwrite(im, outpath);
 
-shps = im_rot - bw3;
+shps = im_rot - bw3; %Only shapes
 figure;
 imshow(shps);
 title('Only Shapes');
