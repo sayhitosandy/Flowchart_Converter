@@ -44,7 +44,7 @@ imshow(binaryIm);
 title('Binary Image');
 outFile = 'BinaryImage.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(binaryIm, outPath);
+saveas(gcf, outPath);
 
 %% Bitwise Inversion
 invertedIm = 1-binaryIm;
@@ -53,7 +53,7 @@ imshow(invertedIm);
 title('Inverted Image');
 outFile = 'InvertedImage.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(invertedIm, outPath);
+saveas(gcf, outPath);
 
 %% Display diff regions in image
 % [rgn, n_rgn] = bwlabel(invertedIm);
@@ -62,7 +62,7 @@ imwrite(invertedIm, outPath);
 % title('Image Regions');
 % outfil = 'ImageRegions.jpg';
 % outpath = fullfile(outfold, outfil);
-% imwrite(rgn, outpath);
+% saveas(gcf, outPath);
 
 %% Remove noise
 CC = bwconncomp(invertedIm);
@@ -75,7 +75,7 @@ imshow(cleanedIm);
 title('Image Cleaned');
 outFile = 'CleanedImage.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(cleanedIm, outPath);
+saveas(gcf, outPath);
 
 %% Image Fill
 filledIm = imfill(cleanedIm, 'holes'); % Fill holes in the image
@@ -84,7 +84,7 @@ imshow(filledIm);
 title('Filled Image');
 outFile = 'FilledImage.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(filledIm, outPath);
+saveas(gcf, outPath);
 
 %% Edge Detection
 edgeIm = edge(filledIm, 'zerocross'); %Zero cross edge detection
@@ -93,7 +93,7 @@ imshow(edgeIm);
 title('Edge Detection');
 outFile = 'EdgeDetection.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(edgeIm, outPath);
+saveas(gcf, outPath);
 
 %% Hough Transform (In-built)
 % angle = horizon(filledIm);
@@ -132,6 +132,9 @@ for k = 1:length(lines)
    end
 end
 title('Detected Lines');
+outFile = 'HoughTransform.jpg';
+outPath = fullfile(outFolder, outFile);
+saveas(gcf, outPath);
 
 %% Find Best Angle and rotate
 lines = houghlines(edgeIm, theta, rho, peaks);
@@ -144,7 +147,7 @@ imshow(cleanedRotatedIm);
 title('Rotated Image');
 outFile = 'RotatedImage.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(cleanedRotatedIm, outPath);
+saveas(gcf, outPath);
 
 [nrows, ncols] = size(cleanedRotatedIm);
 
@@ -153,7 +156,7 @@ imshow(filledRotatedIm);
 title('Filled Image');
 outFile = 'RotatedFilledImage.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(filledRotatedIm, outPath);
+saveas(gcf, outPath);
 
 %% Decomposition into arrows and shapes
 
@@ -169,7 +172,7 @@ figure, imshow(arrowsIm);
 title('Only Arrows');
 outFile = 'Arrows.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(arrowsIm, outPath);
+saveas(gcf, outPath);
 
 shapesIm = cleanedRotatedIm - arrowsIm; %Only shapes
 figure;
@@ -177,13 +180,18 @@ imshow(shapesIm);
 title('Only Shapes');
 outFile = 'Shapes.jpg';
 outPath = fullfile(outFolder, outFile);
-imwrite(shapesIm, outPath);
+saveas(gcf, outPath);
 
 
 %% Decompose Shapes into Circles, Rectangles and Diamonds
 
 [shapeLabels, n_shapeLabels] = bwlabel(shapesIm); %Find the number of shapes in the image
-% figure; imagesc(shapeLabels); axis equal;
+figure; imagesc(shapeLabels); axis equal;
+title('Different Shapes in Image');
+outFile = 'Different Shapes.jpg';
+outPath = fullfile(outFolder, outFile);
+% imwrite( ind2rgb(im2uint8(mat2gray(shapeLabels)), parula(256)), outPath);
+saveas(gcf, outPath);
 
 shapeProps = regionprops(shapeLabels, 'all'); %Extract all properties of shapes
 
@@ -210,7 +218,12 @@ isShapeDiad = logical(isShapeDiad .* ~isShapeCircle); % 1 if shape is Diamond
 %% Find Arrow Orientation, Arrow Head and Arrow Tail
 
 [arrowLabels, n_arrowLabels] = bwlabel(arrowsIm); %Find all arrows in the image
-% figure; imagesc(arrowLabels); axis equal;
+figure; imagesc(arrowLabels); axis equal;
+title('Different Arrows in Image');
+outFile = 'Different Arrows.jpg';
+outPath = fullfile(outFolder, outFile);
+% imwrite( ind2rgb(im2uint8(mat2gray(arrowLabels)), parula(256)), outPath);
+saveas(gcf, outPath);
 
 arrowProps = regionprops(arrowLabels, 'all'); %Extract all properties of each arrow
 
@@ -218,10 +231,14 @@ arrowCentroids = cat(1, arrowProps.Centroid); %Centroid of each arrow
 arrowBBs = cat(1, arrowProps.BoundingBox); %Axis Aligned Bounding Box of each arrow
 arrowCentres = [arrowBBs(:, 1) + 0.5*arrowBBs(:, 3), arrowBBs(:, 2) + 0.5*arrowBBs(:, 4)]; %Centre of Bounding Box of each arrow
 
-% figure; imshow(arrowsIm);
-% hold on;
-% plot(arrowCentres(:, 1), arrowCentres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
-% plot(arrowCentroids(:, 1), arrowCentroids(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
+figure; imshow(arrowsIm);
+hold on;
+plot(arrowCentres(:, 1), arrowCentres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
+plot(arrowCentroids(:, 1), arrowCentroids(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
+title('Arrow Centres and Centroids');
+outFile = 'ArrowCentresCentroids.jpg';
+outPath = fullfile(outFolder, outFile);
+saveas(gcf, outPath);
 
 % Find head and tail of the arrow based on its orientation
 arrowBBsMidpts = [];
@@ -229,7 +246,7 @@ allArrowHeads = []; %Head (x,y) of each arrow
 allArrowTails = []; %Tail (x,y) of each arrow
 
 for i = 1:n_arrowLabels
-%     hold on;
+    hold on;
     arrowOrient = arrowProps(i).Orientation; %Orientation of each arrow in deg.
     if (abs(abs(arrowOrient)-90) > abs(arrowOrient)) %Horizontal arrow
         arrowBBMidpt = [arrowBBs(i, 1), arrowCentres(i, 2);  arrowBBs(i, 1) + arrowBBs(i, 3), arrowCentres(i, 2)];
@@ -245,12 +262,18 @@ for i = 1:n_arrowLabels
         arrowHead = arrowBBMidpt(2, :);
         arrowTail = arrowBBMidpt(1, :);
     end
-%     plot(arrowHead(:, 1), arrowHead(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
-%     plot(arrowTail(:, 1), arrowTail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+    
+    plot(arrowHead(:, 1), arrowHead(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+    plot(arrowTail(:, 1), arrowTail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+    
     arrowBBsMidpts = [arrowBBsMidpts; arrowBBMidpt];
     allArrowHeads = [allArrowHeads; arrowHead];
     allArrowTails = [allArrowTails; arrowTail];
 end
+title('Arrows Heads and Tails');
+outFile = 'ArrowsHeadTail.jpg';
+outPath = fullfile(outFolder, outFile);
+saveas(gcf, outPath);
 
 %% Find Closest Shape to Arrow Head
 
@@ -270,7 +293,11 @@ end
 
 figure;imshow(shapesIm);
 hold on;
-plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
+plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r*');
+title('Shapes Anchors');
+outFile = 'ShapeAnchors.jpg';
+outPath = fullfile(outFolder, outFile);
+saveas(gcf, outPath);
 
 arrowHeads = []; %Final set of arrow heads
 arrowTails = []; %Final set of arrow tails
@@ -292,9 +319,13 @@ for i = 1:size(allArrowHeads, 1)
 end
 
 % Plot final arrow heads and tails
-% hold on;
-% plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
-% plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
+hold on;
+plot(arrowHeads(:, 1), arrowHeads(:, 2), 'b*');
+plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
+title('Final Arrows Heads and Tails');
+outFile = 'FinalArrowsHeadTail.jpg';
+outPath = fullfile(outFolder, outFile);
+saveas(gcf, outPath);
 
 
 %% Plot Circles
@@ -334,3 +365,9 @@ for i = 1:size(diadsBBs,1)
 %     plot(p,'EdgeColor','w','LineWidth',3)
     hold on;
 end
+
+%% Save Final Image
+title('Output Flowchart');
+outFile = 'OutputImage.jpg';
+outPath = fullfile(outFolder, outFile);
+saveas(gcf, outPath);
