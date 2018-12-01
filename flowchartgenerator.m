@@ -176,3 +176,41 @@ title('Only Shapes');
 outfil = 'Shapes.jpg';
 outpath = fullfile(outfold, outfil);
 imwrite(shps, outpath);
+
+
+
+%%
+[labelledIm,n] = bwlabel(shps);
+figure; imagesc(labelledIm); axis equal;
+
+% coloredLabels = label2rgb(labelledIm,'hsv');
+% figure; imshow(coloredLabels);
+
+%%
+% [centers,radii] = imfindcircles(labelledIm,[20 25],'ObjectPolarity','dark')
+
+%%
+
+stats= regionprops(labelledIm, 'all');
+
+Centroid = cat(1, stats.Centroid);
+Perimeter = cat(1,stats.Perimeter);
+Area = cat(1,stats.ConvexArea);
+
+CircleMetric = (Perimeter.^2)./(4*pi*Area);  %circularity metric
+RectangleMetric = NaN(n,1);
+% figure; imshow(stats.Image);
+
+% for every blob
+for i = 1: n
+    [p,q] = size(stats(i).FilledImage);
+    RectangleMetric(i) = Area(i)/(p*q);
+    figure;imshow(stats(i).FilledImage);
+    
+end
+
+isCircle = (CircleMetric < 1.1);
+isRectangle = (RectangleMetric > 0.75);
+isRectangle = isRectangle .* ~isCircle;
+isDiamond = (RectangleMetric <= 0.75);
+isDiamond = isDiamond .* ~isCircle;
