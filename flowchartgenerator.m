@@ -264,3 +264,38 @@ for i = 1: n
 end
 
 %%
+
+mids = [];
+for i=1:size(stats,1) %clockwise
+    Boxx = stats(i).BoundingBox;
+
+    mid1 = [Boxx(1) + 0.5*Boxx(3), Boxx(2)];
+    mid2 = [Boxx(1) + Boxx(3), Boxx(2) + 0.5*Boxx(4)];
+    mid3 = [Boxx(1) + 0.5*Boxx(3), Boxx(2) + Boxx(4)];
+    mid4 = [Boxx(1), Boxx(2) + 0.5*Boxx(4)];
+    mids = [mids; mid1; mid2; mid3; mid4];
+end
+figure;imshow(shps);
+hold on;
+plot(mids(:, 1), mids(:, 2), 'r.');
+
+%%
+allheads = [];
+alltails = [];
+for i=1:size(heads, 1)
+    distances = [];
+    for j=1:size(mids, 1)
+        distance = pdist([heads(i, 1), heads(i, 2); mids(j, 1), mids(j, 2)],'euclidean');
+        distances = [distances; distance];
+    end
+    [~, minidx] = min(distances(:));
+    hold on;
+%     plot(mids(minidx, 1), mids(minidx, 2), 'g*');
+%     plot(heads(i, 1), heads(i, 2), 'b*');
+    allheads = [allheads;  mids(minidx, :)];
+    alltails = [alltails; tails(i, :)];
+end
+hold on;
+plot(allheads(:, 1), allheads(:, 2), 'r*');
+plot(alltails(:, 1), alltails(:, 2), 'y*');
+%%

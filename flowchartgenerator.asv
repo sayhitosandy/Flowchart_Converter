@@ -190,7 +190,7 @@ figure; imagesc(labelledIm); axis equal;
 
 %%
 
-stats= regionprops(labelledIm, 'all');
+stats = regionprops(labelledIm, 'all');
 
 Centroid = cat(1, stats.Centroid);
 Perimeter = cat(1,stats.Perimeter);
@@ -201,7 +201,7 @@ RectangleMetric = NaN(n,1);
 % figure; imshow(stats.Image);
 
 % for every blob
-for i = 1: n
+for i = 1:n
     [p,q] = size(stats(i).FilledImage);
     RectangleMetric(i) = Area(i)/(p*q);
     figure;imshow(stats(i).FilledImage);
@@ -232,6 +232,8 @@ plot(centres(:, 1), centres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
 plot(Centroid(:, 1), Centroid(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
 
 midpts = [];
+heads = [];
+tails = [];
 
 for i = 1: n
 %     figure;imshow(arrows(i).FilledImage);    
@@ -239,17 +241,58 @@ for i = 1: n
     orient = arrows(i).Orientation;
     if (abs(abs(orient)-90) > abs(orient))
         midpt = [bb(i, 1), centres(i, 2);  bb(i, 1) + bb(i, 3), centres(i, 2)];
-        midpts = [midpts; midpt];
         hold on;
-        plot(midpt(:, 1), midpt(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+%         plot(midpt(:, 1), midpt(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
     else
         midpt = [centres(i, 1), bb(i, 2); centres(i, 1), bb(i, 2) + bb(i, 4)];
-        midpts = [midpts; midpt];
         hold on;
-        plot(midpt(:, 1), midpt(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+%         plot(midpt(:, 1), midpt(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
     end
     
-    pdist([Centroid(i, :); midpt(1, :)], 'euclidean') > 
-    
+    if (pdist([Centroid(i, :); midpt(1, :)], 'euclidean') <= pdist([centres(i, :); midpt(1, :)], 'euclidean'))
+        head = midpt(1, :);
+        tail = midpt(2, :);
+    else
+        head = midpt(2, :);
+        tail = midpt(1, :);
+    end
+    plot(head(:, 1), head(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+    plot(tail(:, 1), tail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+    midpts = [midpts; midpt];
+    heads = [heads; head];
+    tails = [tails; tail];
 end
 
+%%
+
+mids = [];
+for i=1:size(stats,1) %clockwise
+    Boxx = stats(i).BoundingBox;
+
+    mid1 = [Boxx(1) + 0.5*Boxx(3), Boxx(2)];
+    mid2 = [Boxx(1) + Boxx(3), Boxx(2) + 0.5*Boxx(4)];
+    mid3 = [Boxx(1) + 0.5*Boxx(3), Boxx(2) + Boxx(4)];
+    mid4 = [Boxx(1), Boxx(2) + 0.5*Boxx(4)];
+    mids = [mids; mid1; mid2; mid3; mid4];
+end
+figure;imshow(shps);
+hold on;
+plot(mids(:, 1), mids(:, 2), 'r.');
+
+%%
+allheads = [];
+alltails = [];
+for i=1:size(heads, 1)
+    distances = [];
+    for j=1:size(mids, 1)
+        distance = pdist([heads(i, 1), heads(i, 2); mids(j, 1), mids(j, 2)],'euclidean');
+        distances = [distances; distance];
+    end
+    [~, minidx] = min(distances(:));
+    hold on;
+    plot(mids(minidx, 1), mids(minidx, 2), 'g*');
+    plot(heads(i, 1), heads(i, 2), 'b*');
+    allheads = [heads] 
+end
+
+%%
