@@ -78,7 +78,7 @@ outPath = fullfile(outFolder, outFile);
 imwrite(cleanedIm, outPath);
 
 %% Image Fill
-filledIm = imfill(cleanedIm, 'holes');
+filledIm = imfill(cleanedIm, 'holes'); % Fill holes in the image
 figure;
 imshow(filledIm);
 title('Filled Image');
@@ -87,7 +87,7 @@ outPath = fullfile(outFolder, outFile);
 imwrite(filledIm, outPath);
 
 %% Edge Detection
-edgeIm = edge(filledIm, 'zerocross');
+edgeIm = edge(filledIm, 'zerocross'); %Zero cross edge detection
 figure;
 imshow(edgeIm);
 title('Edge Detection');
@@ -180,60 +180,62 @@ imwrite(shapesIm, outPath);
 
 %% Decompose Shapes into Circles, Rectangles and Diamonds
 
-[shapeLabels,n_shapeLabels] = bwlabel(shapesIm);
+[shapeLabels, n_shapeLabels] = bwlabel(shapesIm); %Find the number of shapes in the image
 % figure; imagesc(shapeLabels); axis equal;
 
-shapeProps = regionprops(shapeLabels, 'all');
+shapeProps = regionprops(shapeLabels, 'all'); %Extract all properties of shapes
 
-shapeCentroids = cat(1, shapeProps.Centroid);
-shapePerimeters = cat(1, shapeProps.Perimeter);
-shapeArea = cat(1, shapeProps.ConvexArea);
-shapeBBs = cat(1, shapeProps.BoundingBox);
+shapeCentroids = cat(1, shapeProps.Centroid); %Centroid of each shape
+shapePerimeters = cat(1, shapeProps.Perimeter); %Perimeter of each shape
+shapeArea = cat(1, shapeProps.ConvexArea); %Convex Hull Area of each shape
+shapeBBs = cat(1, shapeProps.BoundingBox); %Axis Aligned Bounding Box for each shape
 
-circleAreaRatio = (shapePerimeters.^2)./(4*pi*shapeArea);  %circularity metric
-rectAreaRatio = NaN(n_shapeLabels,1);
+circleAreaRatio = (shapePerimeters.^2)./(4*pi*shapeArea); %Detect circles
+rectAreaRatio = NaN(n_shapeLabels,1); %Detect rectangles and diamonds
 
 for i = 1:n_shapeLabels
-    [p,q] = size(shapeProps(i).FilledImage);
+    [p,q] = size(shapeProps(i).FilledImage); %Area of Bounding Box of each shape
     rectAreaRatio(i) = shapeArea(i)/(p*q);
     figure; imshow(shapeProps(i).FilledImage);
 end
 
-isShapeCircle = (circleAreaRatio < 1.1);
-isShapeRect = (rectAreaRatio > 0.75);
-isShapeRect = logical(isShapeRect .* ~isShapeCircle);
+isShapeCircle = (circleAreaRatio < 1.1); % 1 if shape is a Circle
+isShapeRect = (rectAreaRatio > 0.75); 
+isShapeRect = logical(isShapeRect .* ~isShapeCircle); % 1 if shape is Rectangle
 isShapeDiad = (rectAreaRatio <= 0.75);
-isShapeDiad = logical(isShapeDiad .* ~isShapeCircle);
+isShapeDiad = logical(isShapeDiad .* ~isShapeCircle); % 1 if shape is Diamond
 
 %% Find Arrow Orientation, Arrow Head and Arrow Tail
 
-[arrowLabels, n_arrowLabels] = bwlabel(arrowsIm);
+[arrowLabels, n_arrowLabels] = bwlabel(arrowsIm); %Find all arrows in the image
 % figure; imagesc(arrowLabels); axis equal;
 
-arrowProps = regionprops(arrowLabels, 'all');
+arrowProps = regionprops(arrowLabels, 'all'); %Extract all properties of each arrow
 
-arrowCentroids = cat(1, arrowProps.Centroid);
-arrowBBs = cat(1, arrowProps.BoundingBox);
-arrowCentres = [arrowBBs(:, 1) + 0.5*arrowBBs(:, 3), arrowBBs(:, 2) + 0.5*arrowBBs(:, 4)];
+arrowCentroids = cat(1, arrowProps.Centroid); %Centroid of each arrow
+arrowBBs = cat(1, arrowProps.BoundingBox); %Axis Aligned Bounding Box of each arrow
+arrowCentres = [arrowBBs(:, 1) + 0.5*arrowBBs(:, 3), arrowBBs(:, 2) + 0.5*arrowBBs(:, 4)]; %Centre of Bounding Box of each arrow
 
 % figure; imshow(arrowsIm);
 % hold on;
 % plot(arrowCentres(:, 1), arrowCentres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
 % plot(arrowCentroids(:, 1), arrowCentroids(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
 
+% Find head and tail of the arrow based on its orientation
 arrowBBsMidpts = [];
-allArrowHeads = [];
-allArrowTails = [];
+allArrowHeads = []; %Head (x,y) of each arrow
+allArrowTails = []; %Tail (x,y) of each arrow
 
 for i = 1:n_arrowLabels
 %     hold on;
-    arrowOrient = arrowProps(i).Orientation;
-    if (abs(abs(arrowOrient)-90) > abs(arrowOrient))
+    arrowOrient = arrowProps(i).Orientation; %Orientation of each arrow in deg.
+    if (abs(abs(arrowOrient)-90) > abs(arrowOrient)) %Horizontal arrow
         arrowBBMidpt = [arrowBBs(i, 1), arrowCentres(i, 2);  arrowBBs(i, 1) + arrowBBs(i, 3), arrowCentres(i, 2)];
-    else
+    else %Vertical arrow
         arrowBBMidpt = [arrowCentres(i, 1), arrowBBs(i, 2); arrowCentres(i, 1), arrowBBs(i, 2) + arrowBBs(i, 4)];
     end
     
+    % Arrow head is closer to centroid than centre of the Bounding Box
     if (pdist([arrowCentroids(i, :); arrowBBMidpt(1, :)], 'euclidean') <= pdist([arrowCentres(i, :); arrowBBMidpt(1, :)], 'euclidean'))
         arrowHead = arrowBBMidpt(1, :);
         arrowTail = arrowBBMidpt(2, :);
@@ -250,11 +252,12 @@ end
 
 %% Find Closest Shape to Arrow Head
 
+% Find mid points of sides of bounding box for each shape (We connect the arrow head here.)
 shapeBBsMidpts = [];
 
-for i=1:n_shapeLabels %clockwise
+for i = 1:n_shapeLabels %clockwise search
     
-    shapeBB= shapeProps(i).BoundingBox;
+    shapeBB = shapeProps(i).BoundingBox; %Axis Aligned Bounding Box for each shape
 
     shapeBBMidpt1 = [shapeBB(1) + 0.5*shapeBB(3), shapeBB(2)];
     shapeBBMidpt2 = [shapeBB(1) + shapeBB(3), shapeBB(2) + 0.5*shapeBB(4)];
@@ -267,8 +270,8 @@ figure;imshow(shapesIm);
 hold on;
 plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
 
-arrowHeads = [];
-arrowTails = [];
+arrowHeads = []; %Final set of arrow heads
+arrowTails = []; %Final set of arrow tails
 
 for i = 1:size(allArrowHeads, 1)
     arr_shape_dists = [];
@@ -278,7 +281,7 @@ for i = 1:size(allArrowHeads, 1)
         arr_shape_dists = [arr_shape_dists; arr_shape_dist];
     end
     
-    [~, minidx] = min(arr_shape_dists(:));
+    [~, minidx] = min(arr_shape_dists(:)); %Find shape at min distance from arrow head
 %     hold on;
 %     plot(mids(minidx, 1), mids(minidx, 2), 'g*');
 %     plot(heads(i, 1), heads(i, 2), 'b*');
@@ -286,12 +289,14 @@ for i = 1:size(allArrowHeads, 1)
     arrowTails = [arrowTails; allArrowTails(i, :)];
 end
 
+% Plot final arrow heads and tails
 hold on;
 plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
 plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
 
+%% Plot arrows
+
 hold on;
-% arrow(ax);
 arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
 
 %% Plot Circles
@@ -299,8 +304,8 @@ arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'w', 'Fa
 % figure; 
 % ax = gca;
 % ax.YDir = 'reverse';
-circleCentres = shapeCentroids(isShapeCircle,:);
-circleRadii = shapePerimeters(isShapeCircle,:)./(2*pi);
+circleCentres = shapeCentroids(isShapeCircle,:); %Centre of each circle
+circleRadii = shapePerimeters(isShapeCircle,:)./(2*pi); %Radius of each circle
 viscircles(circleCentres, circleRadii, 'Color', 'k');
 
 %% Plot Rectangles
