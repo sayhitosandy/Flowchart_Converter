@@ -146,6 +146,8 @@ outFile = 'RotatedImage.jpg';
 outPath = fullfile(outFolder, outFile);
 imwrite(cleanedRotatedIm, outPath);
 
+[nrows, ncols] = size(cleanedRotatedIm);
+
 figure;
 imshow(filledRotatedIm);
 title('Filled Image');
@@ -196,7 +198,7 @@ rectAreaRatio = NaN(n_shapeLabels,1); %Detect rectangles and diamonds
 for i = 1:n_shapeLabels
     [p,q] = size(shapeProps(i).FilledImage); %Area of Bounding Box of each shape
     rectAreaRatio(i) = shapeArea(i)/(p*q);
-    figure; imshow(shapeProps(i).FilledImage);
+%     figure; imshow(shapeProps(i).FilledImage);
 end
 
 isShapeCircle = (circleAreaRatio < 1.1); % 1 if shape is a Circle
@@ -223,8 +225,8 @@ arrowCentres = [arrowBBs(:, 1) + 0.5*arrowBBs(:, 3), arrowBBs(:, 2) + 0.5*arrowB
 
 % Find head and tail of the arrow based on its orientation
 arrowBBsMidpts = [];
-allArrowHeads = [];
-allArrowTails = [];
+allArrowHeads = []; %Head (x,y) of each arrow
+allArrowTails = []; %Tail (x,y) of each arrow
 
 for i = 1:n_arrowLabels
 %     hold on;
@@ -252,11 +254,12 @@ end
 
 %% Find Closest Shape to Arrow Head
 
+% Find mid points of sides of bounding box for each shape (We connect the arrow head here.)
 shapeBBsMidpts = [];
 
-for i=1:n_shapeLabels %clockwise
+for i = 1:n_shapeLabels %clockwise search
     
-    shapeBB= shapeProps(i).BoundingBox;
+    shapeBB = shapeProps(i).BoundingBox; %Axis Aligned Bounding Box for each shape
 
     shapeBBMidpt1 = [shapeBB(1) + 0.5*shapeBB(3), shapeBB(2)];
     shapeBBMidpt2 = [shapeBB(1) + shapeBB(3), shapeBB(2) + 0.5*shapeBB(4)];
@@ -269,8 +272,8 @@ figure;imshow(shapesIm);
 hold on;
 plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
 
-arrowHeads = [];
-arrowTails = [];
+arrowHeads = []; %Final set of arrow heads
+arrowTails = []; %Final set of arrow tails
 
 for i = 1:size(allArrowHeads, 1)
     arr_shape_dists = [];
@@ -280,7 +283,7 @@ for i = 1:size(allArrowHeads, 1)
         arr_shape_dists = [arr_shape_dists; arr_shape_dist];
     end
     
-    [~, minidx] = min(arr_shape_dists(:));
+    [~, minidx] = min(arr_shape_dists(:)); %Find shape at min distance from arrow head
 %     hold on;
 %     plot(mids(minidx, 1), mids(minidx, 2), 'g*');
 %     plot(heads(i, 1), heads(i, 2), 'b*');
@@ -288,22 +291,24 @@ for i = 1:size(allArrowHeads, 1)
     arrowTails = [arrowTails; allArrowTails(i, :)];
 end
 
-hold on;
-plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
-plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
+% Plot final arrow heads and tails
+% hold on;
+% plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
+% plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
 
-hold on;
-% arrow(ax);
-arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
 
 %% Plot Circles
 
-% figure; 
-% ax = gca;
-% ax.YDir = 'reverse';
-circleCentres = shapeCentroids(isShapeCircle,:);
-circleRadii = shapePerimeters(isShapeCircle,:)./(2*pi);
+finalIm = ones(nrows, ncols);
+figure; imshow(finalIm);
+circleCentres = shapeCentroids(isShapeCircle,:); %Centre of each circle
+circleRadii = shapePerimeters(isShapeCircle,:)./(2*pi); %Radius of each circle
 viscircles(circleCentres, circleRadii, 'Color', 'k');
+
+%% Plot arrows
+
+% arrow('Start', arrowTails, 'Stop', arrowHeads, 'BaseAngle', 29, 'TipAngle', 30, 'EdgeColor', 'k', 'FaceColor','k', 'LineWidth', 2);
+arrow('Start', arrowTails, 'Stop', arrowHeads, 'BaseAngle', 29, 'TipAngle', 30, 'EdgeColor', 'k', 'FaceColor','k', 'LineWidth', 2);
 
 %% Plot Rectangles
 

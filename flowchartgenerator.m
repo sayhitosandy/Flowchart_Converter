@@ -146,6 +146,8 @@ outFile = 'RotatedImage.jpg';
 outPath = fullfile(outFolder, outFile);
 imwrite(cleanedRotatedIm, outPath);
 
+[nrows, ncols] = size(cleanedRotatedIm);
+
 figure;
 imshow(filledRotatedIm);
 title('Filled Image');
@@ -196,7 +198,7 @@ rectAreaRatio = NaN(n_shapeLabels,1); %Detect rectangles and diamonds
 for i = 1:n_shapeLabels
     [p,q] = size(shapeProps(i).FilledImage); %Area of Bounding Box of each shape
     rectAreaRatio(i) = shapeArea(i)/(p*q);
-    figure; imshow(shapeProps(i).FilledImage);
+%     figure; imshow(shapeProps(i).FilledImage);
 end
 
 isShapeCircle = (circleAreaRatio < 1.1); % 1 if shape is a Circle
@@ -290,23 +292,23 @@ for i = 1:size(allArrowHeads, 1)
 end
 
 % Plot final arrow heads and tails
-hold on;
-plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
-plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
+% hold on;
+% plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
+% plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
 
-%% Plot arrows
-
-hold on;
-arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
 
 %% Plot Circles
 
-% figure; 
-% ax = gca;
-% ax.YDir = 'reverse';
+finalIm = ones(nrows, ncols);
+figure; imshow(finalIm);
 circleCentres = shapeCentroids(isShapeCircle,:); %Centre of each circle
 circleRadii = shapePerimeters(isShapeCircle,:)./(2*pi); %Radius of each circle
 viscircles(circleCentres, circleRadii, 'Color', 'k');
+
+%% Plot arrows
+
+% arrow('Start', arrowTails, 'Stop', arrowHeads, 'BaseAngle', 29, 'TipAngle', 30, 'EdgeColor', 'k', 'FaceColor','k', 'LineWidth', 2);
+arrow('Start', arrowTails, 'Stop', arrowHeads, 'Type', 'line', 'LineWidth', 2);
 
 %% Plot Rectangles
 
@@ -332,9 +334,3 @@ for i = 1:size(diadsBBs,1)
 %     plot(p,'EdgeColor','w','LineWidth',3)
     hold on;
 end
-
-%% Plot Arrows
-
-% hold on;
-% arrow(ax);
-% arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'k', 'FaceColor','k');
