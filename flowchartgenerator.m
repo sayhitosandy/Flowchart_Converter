@@ -178,7 +178,6 @@ outpath = fullfile(outfold, outfil);
 imwrite(shps, outpath);
 
 
-
 %%
 [labelledIm,n] = bwlabel(shps);
 figure; imagesc(labelledIm); axis equal;
@@ -191,7 +190,7 @@ figure; imagesc(labelledIm); axis equal;
 
 %%
 
-stats= regionprops(labelledIm, 'all');
+stats = regionprops(labelledIm, 'all');
 
 Centroid = cat(1, stats.Centroid);
 Perimeter = cat(1,stats.Perimeter);
@@ -202,7 +201,7 @@ RectangleMetric = NaN(n,1);
 % figure; imshow(stats.Image);
 
 % for every blob
-for i = 1: n
+for i = 1:n
     [p,q] = size(stats(i).FilledImage);
     RectangleMetric(i) = Area(i)/(p*q);
     figure;imshow(stats(i).FilledImage);
@@ -214,3 +213,54 @@ isRectangle = (RectangleMetric > 0.75);
 isRectangle = isRectangle .* ~isCircle;
 isDiamond = (RectangleMetric <= 0.75);
 isDiamond = isDiamond .* ~isCircle;
+
+%%
+[labelledArrows,n] = bwlabel(bw3);
+figure; imagesc(labelledArrows); axis equal;
+
+%%
+
+arrows = regionprops(labelledArrows, 'all');
+
+Centroid = cat(1, arrows.Centroid);
+bb = cat(1, arrows.BoundingBox);
+centres = [bb(:, 1) + 0.5*bb(:, 3), bb(:, 2) + 0.5*bb(:, 4)];
+
+figure; imshow(bw3);
+hold on;
+plot(centres(:, 1), centres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
+plot(Centroid(:, 1), Centroid(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
+
+midpts = [];
+heads = [];
+tails = [];
+
+for i = 1: n
+%     figure;imshow(arrows(i).FilledImage);    
+    hold on;
+    orient = arrows(i).Orientation;
+    if (abs(abs(orient)-90) > abs(orient))
+        midpt = [bb(i, 1), centres(i, 2);  bb(i, 1) + bb(i, 3), centres(i, 2)];
+        hold on;
+%         plot(midpt(:, 1), midpt(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+    else
+        midpt = [centres(i, 1), bb(i, 2); centres(i, 1), bb(i, 2) + bb(i, 4)];
+        hold on;
+%         plot(midpt(:, 1), midpt(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+    end
+    
+    if (pdist([Centroid(i, :); midpt(1, :)], 'euclidean') <= pdist([centres(i, :); midpt(1, :)], 'euclidean'))
+        head = midpt(1, :);
+        tail = midpt(2, :);
+    else
+        head = midpt(2, :);
+        tail = midpt(1, :);
+    end
+    plot(head(:, 1), head(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+    plot(tail(:, 1), tail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+    midpts = [midpts; midpt];
+    heads = [heads; head];
+    tails = [tails; tail];
+end
+
+%%

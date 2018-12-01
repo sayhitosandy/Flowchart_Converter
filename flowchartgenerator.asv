@@ -4,7 +4,7 @@ clc
 clear
 
 %% Initialize files and folders
-n = '1'; %Input Image Number
+n = '6'; %Input Image Number
 inpfil = strcat(n, '.jpg'); %Input File
 inpfold = './Inputs'; %Input Folder
 outfold = strcat('./Outputs/', n); %Output Folder
@@ -56,13 +56,13 @@ outpath = fullfile(outfold, outfil);
 imwrite(im, outpath);
 
 %% Display diff regions in image
-[rgn, n] = bwlabel(im);
-figure;
-imagesc(rgn); axis equal;
-title('Image Regions');
-outfil = 'ImageRegions.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(rgn, outpath);
+% [rgn, n] = bwlabel(im);
+% figure;
+% imagesc(rgn); axis equal;
+% title('Image Regions');
+% outfil = 'ImageRegions.jpg';
+% outpath = fullfile(outfold, outfil);
+% imwrite(rgn, outpath);
 
 %% Remove noise
 CC = bwconncomp(im);
@@ -84,7 +84,7 @@ imshow(imf);
 title('Filled Image');
 outfil = 'FilledImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(imf, outpath);
 
 %% Edge Detection
 edge_BW = edge(imf, 'zerocross');
@@ -93,7 +93,7 @@ imshow(edge_BW);
 title('Edge Detection');
 outfil = 'EdgeDetection.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(edge_BW, outpath);
 
 %% Hough Transform (In-built)
 % angle = horizon(imf);
@@ -144,14 +144,14 @@ imshow(im_rot);
 title('Rotated Image');
 outfil = 'RotatedImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(im_rot, outpath);
 
 figure;
 imshow(imf_rot);
 title('Filled Image');
 outfil = 'RotatedFilledImage.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(imf_rot, outpath);
 
 %% Decomposition into arrows and shapes
 
@@ -167,7 +167,7 @@ figure, imshow(bw3);
 title('Only Arrows');
 outfil = 'Arrows.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(bw3, outpath);
 
 shps = im_rot - bw3; %Only shapes
 figure;
@@ -175,4 +175,81 @@ imshow(shps);
 title('Only Shapes');
 outfil = 'Shapes.jpg';
 outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+imwrite(shps, outpath);
+
+
+%%
+[labelledIm,n] = bwlabel(shps);
+figure; imagesc(labelledIm); axis equal;
+
+% coloredLabels = label2rgb(labelledIm,'hsv');
+% figure; imshow(coloredLabels);
+
+%%
+% [centers,radii] = imfindcircles(labelledIm,[20 25],'ObjectPolarity','dark')
+
+%%
+
+stats= regionprops(labelledIm, 'all');
+
+Centroid = cat(1, stats.Centroid);
+Perimeter = cat(1,stats.Perimeter);
+Area = cat(1,stats.ConvexArea);
+
+CircleMetric = (Perimeter.^2)./(4*pi*Area);  %circularity metric
+RectangleMetric = NaN(n,1);
+% figure; imshow(stats.Image);
+
+% for every blob
+for i = 1: n
+    [p,q] = size(stats(i).FilledImage);
+    RectangleMetric(i) = Area(i)/(p*q);
+    figure;imshow(stats(i).FilledImage);
+    
+end
+
+isCircle = (CircleMetric < 1.1);
+isRectangle = (RectangleMetric > 0.75);
+isRectangle = isRectangle .* ~isCircle;
+isDiamond = (RectangleMetric <= 0.75);
+isDiamond = isDiamond .* ~isCircle;
+
+%%
+[labelledArrows,n] = bwlabel(bw3);
+figure; imagesc(labelledArrows); axis equal;
+
+%%
+
+arrows = regionprops(labelledArrows, 'all');
+
+Centroid = cat(1, arrows.Centroid);
+bb = cat(1, arrows.BoundingBox);
+centres = [bb(:, 1) + 0.5*bb(:, 3), bb(:, 2) + 0.5*bb(:, 4)];
+
+figure; imshow(bw3);
+hold on;
+plot(centres(:, 1), centres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
+plot(Centroid(:, 1), Centroid(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
+
+midpts = [];
+
+for i = 1: n
+%     figure;imshow(arrows(i).FilledImage);    
+    hold on;
+    orient = arrows(i).Orientation;
+    if (abs(abs(orient)-90) > abs(orient))
+        midpt = [bb(i, 1), centres(i, 2);  bb(i, 1) + bb(i, 3), centres(i, 2)];
+        midpts = [midpts; midpt];
+        hold on;
+        plot(midpt(:, 1), midpt(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+    else
+        midpt = [centres(i, 1), bb(i, 2); centres(i, 1), bb(i, 2) + bb(i, 4)];
+        midpts = [midpts; midpt];
+        hold on;
+        plot(midpt(:, 1), midpt(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+    end
+    
+    pdist([Centroid(i, :); midpt(1, :)], 'euclidean') > 
+    
+end
+
