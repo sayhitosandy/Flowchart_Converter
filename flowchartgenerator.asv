@@ -4,59 +4,59 @@ clc
 clear
 
 %% Initialize files and folders
-n = '6'; %Input Image Number
-inpfil = strcat(n, '.jpg'); %Input File
-inpfold = './Inputs'; %Input Folder
-outfold = strcat('./Outputs/', n); %Output Folder
-inppath = fullfile(inpfold, inpfil); %Input Path 
-mkdir(outfold); %Create new output folder
+imgNo = '6'; %Input Image Number
+inpFile = strcat(imgNo, '.jpg'); %Input File
+inpFolder = './Inputs'; %Input Folder
+outFolder = strcat('./Outputs/', imgNo); %Output Folder
+inpPath = fullfile(inpFolder, inpFile); %Input Path 
+mkdir(outFolder); %Create new output folder
 
 %% Read Image
-im = imread(inppath); 
+originalIm = imread(inpPath); 
 figure;
-imshow(im);
+imshow(originalIm);
 title('Original Image');
 
 %% Convert to grayscale and resize
-im = rgb2gray(im);
-[nrows, ncols] = size(im); %Image size
+grayIm = rgb2gray(originalIm);
+[nrows, ncols] = size(grayIm); %Image size
 nrows = nrows/10; 
 ncols = ncols/10;
 % r = nrows/ncols; %Ratio
-im = imresize(im, [nrows, ncols]); %Reduce to 1/10th
-% im = imresize(im, [nrows/r, ncols*r]); %Reduce to 1/10th
+resizedIm = imresize(grayIm, [nrows, ncols]); %Reduce to 1/10th
+% resizedIm = imresize(grayIm, [nrows/r, ncols*r]); %Reduce to 1/10th
 figure;
-imshow(im);
+imshow(resizedIm);
 title('Grayscaled and Resized Image');
 
 %% Gaussian Filter to remove salt and pepper noise
-% im = imgaussfilt(im, 1);
+% filteredIm = imgaussfilt(resizedIm, 1);
 % figure;
-% imshow(im);
+% imshow(filteredIm);
 
 %% Adaptive Thresholding and Binarization
-T = adaptthresh(im, 0.3, 'ForegroundPolarity','dark'); %Adaptive Thresholding
+T = adaptthresh(resizedIm, 0.3, 'ForegroundPolarity','dark'); %Adaptive Thresholding
+% figure;
+% imagesc(T);
+binaryIm = imbinarize(resizedIm, T); %Binarization
 figure;
-imagesc(T);
-im = imbinarize(im,T); %Binarization
-figure;
-imshow(im);
+imshow(binaryIm);
 title('Binary Image');
-outfil = 'BinaryImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+outFile = 'BinaryImage.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(binaryIm, outPath);
 
 %% Bitwise Inversion
-im = 1-im;
+invertedIm = 1-binaryIm;
 figure;
-imshow(im);
+imshow(invertedIm);
 title('Inverted Image');
-outfil = 'InvertedImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im, outpath);
+outFile = 'InvertedImage.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(invertedIm, outPath);
 
 %% Display diff regions in image
-% [rgn, n] = bwlabel(im);
+% [rgn, n_rgn] = bwlabel(invertedIm);
 % figure;
 % imagesc(rgn); axis equal;
 % title('Image Regions');
@@ -65,44 +65,44 @@ imwrite(im, outpath);
 % imwrite(rgn, outpath);
 
 %% Remove noise
-CC = bwconncomp(im);
+CC = bwconncomp(invertedIm);
 S = regionprops(CC, 'Area');
 L = labelmatrix(CC);
-BW2 = ismember(L, find([S.Area] >= 50*nrows/100)); %Keep only those regions which are of area more than specified
+cleanedIm = ismember(L, find([S.Area] >= 50*nrows/100)); %Keep only those regions which are of area more than specified
 % bw = bwareaopen(im, 50);
 figure;
-imshow(BW2);
+imshow(cleanedIm);
 title('Image Cleaned');
-outfil = 'CleanedImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(BW2, outpath);
+outFile = 'CleanedImage.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(cleanedIm, outPath);
 
 %% Image Fill
-imf = imfill(BW2, 'holes');
+filledIm = imfill(cleanedIm, 'holes');
 figure;
-imshow(imf);
+imshow(filledIm);
 title('Filled Image');
-outfil = 'FilledImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(imf, outpath);
+outFile = 'FilledImage.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(filledIm, outPath);
 
 %% Edge Detection
-edge_BW = edge(imf, 'zerocross');
+edgeIm = edge(filledIm, 'zerocross');
 figure;
-imshow(edge_BW);
+imshow(edgeIm);
 title('Edge Detection');
-outfil = 'EdgeDetection.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(edge_BW, outpath);
+outFile = 'EdgeDetection.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(edgeIm, outPath);
 
 %% Hough Transform (In-built)
-% angle = horizon(imf);
-% rot = imrotate(imf, angle);
+% angle = horizon(filledIm);
+% rot = imrotate(filledIm, angle);
 % figure;
 % imshow(rot);
 
 %% Hough Transform
-[H,theta,rho] = hough(edge_BW); %Hough Transform
+[H,theta,rho] = hough(edgeIm); %Hough Transform
 peaks = houghpeaks(H, 100); %Peaks in hough transform
 
 figure;
@@ -113,8 +113,8 @@ plot(theta(peaks(:,2)),rho(peaks(:,1)),'s','color','white');
 colormap(gca, hot);
 title('Hough Transform Plot');
 
-lines = houghlines(edge_BW,theta,rho,peaks,'FillGap',5,'MinLength',2); 
-figure, imshow(BW2), hold on
+lines = houghlines(edgeIm,theta,rho,peaks,'FillGap',5,'MinLength',2); 
+figure, imshow(cleanedIm), hold on
 max_len = 0;
 for k = 1:length(lines)
    xy = [lines(k).point1; lines(k).point2];
@@ -134,165 +134,163 @@ end
 title('Detected Lines');
 
 %% Find Best Angle and rotate
-lines = houghlines(edge_BW, theta, rho, peaks);
+lines = houghlines(edgeIm, theta, rho, peaks);
 
-best_angle = mode([lines.theta])+90; %Most common angle among all lines
-im_rot = imrotate(BW2, best_angle); %Rotate wrt angle 
-imf_rot = imrotate(imf, best_angle);
+bestAngle = mode([lines.theta])+90; %Most common angle among all lines
+cleanedRotatedIm = imrotate(cleanedIm, bestAngle); %Rotate wrt angle 
+filledRotatedIm = imrotate(filledIm, bestAngle);
 figure;
-imshow(im_rot);
+imshow(cleanedRotatedIm);
 title('Rotated Image');
-outfil = 'RotatedImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(im_rot, outpath);
+outFile = 'RotatedImage.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(cleanedRotatedIm, outPath);
 
 figure;
-imshow(imf_rot);
+imshow(filledRotatedIm);
 title('Filled Image');
-outfil = 'RotatedFilledImage.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(imf_rot, outpath);
+outFile = 'RotatedFilledImage.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(filledRotatedIm, outPath);
 
 %% Decomposition into arrows and shapes
 
 se = strel('diamond', 5); %Diamond shaped kernel
-filt = imopen(imf_rot, se); %Open Filter
-bw = bwareaopen(filt, 50); %Remove arrows
-% figure, imshow(bw);
-arrs = im_rot - bw; %Remove shapes (Only arrows)
-arrs = imbinarize(arrs);
+openedIm = imopen(filledRotatedIm, se); %Open Filter
+bwIm = bwareaopen(openedIm, 50); %Remove arrows
+% figure, imshow(bwIm);
+arrIm = cleanedRotatedIm - bwIm; %Remove shapes (Only arrows)
+arrIm = imbinarize(arrIm);
 
-bw3 = bwareaopen(arrs, 20); %Remove noise
-figure, imshow(bw3);
+arrowsIm = bwareaopen(arrIm, 20); %Remove noise
+figure, imshow(arrowsIm);
 title('Only Arrows');
-outfil = 'Arrows.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(bw3, outpath);
+outFile = 'Arrows.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(arrowsIm, outPath);
 
-shps = im_rot - bw3; %Only shapes
+shapesIm = cleanedRotatedIm - arrowsIm; %Only shapes
 figure;
-imshow(shps);
+imshow(shapesIm);
 title('Only Shapes');
-outfil = 'Shapes.jpg';
-outpath = fullfile(outfold, outfil);
-imwrite(shps, outpath);
+outFile = 'Shapes.jpg';
+outPath = fullfile(outFolder, outFile);
+imwrite(shapesIm, outPath);
 
 
-%%
-[labelledIm,n] = bwlabel(shps);
-figure; imagesc(labelledIm); axis equal;
+%% Decompose Shapes into Circles, Rectangles and Diamonds
 
-% coloredLabels = label2rgb(labelledIm,'hsv');
-% figure; imshow(coloredLabels);
+[shapeLabels,n_shapeLabels] = bwlabel(shapesIm);
+figure; imagesc(shapeLabels); axis equal;
 
-%%
-% [centers,radii] = imfindcircles(labelledIm,[20 25],'ObjectPolarity','dark')
+shapeProps = regionprops(shapeLabels, 'all');
 
-%%
+shapeCentroids = cat(1, shapeProps.Centroid);
+shapePerimeters = cat(1, shapeProps.Perimeter);
+shapeArea = cat(1, shapeProps.ConvexArea);
 
-stats = regionprops(labelledIm, 'all');
+circleAreaRatio = (shapePerimeters.^2)./(4*pi*shapeArea);  %circularity metric
+rectAreaRatio = NaN(n_shapeLabels,1);
 
-Centroid = cat(1, stats.Centroid);
-Perimeter = cat(1,stats.Perimeter);
-Area = cat(1,stats.ConvexArea);
-
-CircleMetric = (Perimeter.^2)./(4*pi*Area);  %circularity metric
-RectangleMetric = NaN(n,1);
-% figure; imshow(stats.Image);
-
-% for every blob
-for i = 1:n
-    [p,q] = size(stats(i).FilledImage);
-    RectangleMetric(i) = Area(i)/(p*q);
-    figure;imshow(stats(i).FilledImage);
-    
+for i = 1:n_shapeLabels
+    [p,q] = size(shapeProps(i).FilledImage);
+    rectAreaRatio(i) = shapeArea(i)/(p*q);
+    figure; imshow(shapeProps(i).FilledImage);
 end
 
-isCircle = (CircleMetric < 1.1);
-isRectangle = (RectangleMetric > 0.75);
-isRectangle = isRectangle .* ~isCircle;
-isDiamond = (RectangleMetric <= 0.75);
-isDiamond = isDiamond .* ~isCircle;
+isShapeCircle = (circleAreaRatio < 1.1);
+isShapeRect = (rectAreaRatio > 0.75);
+isShapeRect = isShapeRect .* ~isShapeCircle;
+isShapeDiad = (rectAreaRatio <= 0.75);
+isShapeDiad = isShapeDiad .* ~isShapeCircle;
 
-%%
-[labelledArrows,n] = bwlabel(bw3);
-figure; imagesc(labelledArrows); axis equal;
+%% Find Arrow Orientation, Arrow Head and Arrow Tail
 
-%%
+[arrowLabels, n_arrowLabels] = bwlabel(arrowsIm);
+figure; imagesc(arrowLabels); axis equal;
 
-arrows = regionprops(labelledArrows, 'all');
+arrowProps = regionprops(arrowLabels, 'all');
 
-Centroid = cat(1, arrows.Centroid);
-bb = cat(1, arrows.BoundingBox);
-centres = [bb(:, 1) + 0.5*bb(:, 3), bb(:, 2) + 0.5*bb(:, 4)];
+arrowCentroids = cat(1, arrowProps.Centroid);
+arrowBBs = cat(1, arrowProps.BoundingBox);
+arrowCentres = [arrowBBs(:, 1) + 0.5*arrowBBs(:, 3), arrowBBs(:, 2) + 0.5*arrowBBs(:, 4)];
 
-figure; imshow(bw3);
+figure; imshow(arrowsIm);
 hold on;
-plot(centres(:, 1), centres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
-plot(Centroid(:, 1), Centroid(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
+plot(arrowCentres(:, 1), arrowCentres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
+plot(arrowCentroids(:, 1), arrowCentroids(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
 
-midpts = [];
-heads = [];
-tails = [];
+arrowBBsMidpts = [];
+arrowHeads = [];
+arrowTails = [];
 
-for i = 1: n
-%     figure;imshow(arrows(i).FilledImage);    
+for i = 1:n_arrowLabels
     hold on;
-    orient = arrows(i).Orientation;
-    if (abs(abs(orient)-90) > abs(orient))
-        midpt = [bb(i, 1), centres(i, 2);  bb(i, 1) + bb(i, 3), centres(i, 2)];
-        hold on;
-%         plot(midpt(:, 1), midpt(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+    arrowOrient = arrowProps(i).Orientation;
+    if (abs(abs(arrowOrient)-90) > abs(arrowOrient))
+        arrowBBMidpt = [arrowBBs(i, 1), arrowCentres(i, 2);  arrowBBs(i, 1) + arrowBBs(i, 3), arrowCentres(i, 2)];
     else
-        midpt = [centres(i, 1), bb(i, 2); centres(i, 1), bb(i, 2) + bb(i, 4)];
-        hold on;
-%         plot(midpt(:, 1), midpt(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+        arrowBBMidpt = [arrowCentres(i, 1), arrowBBs(i, 2); arrowCentres(i, 1), arrowBBs(i, 2) + arrowBBs(i, 4)];
     end
     
-    if (pdist([Centroid(i, :); midpt(1, :)], 'euclidean') <= pdist([centres(i, :); midpt(1, :)], 'euclidean'))
-        head = midpt(1, :);
-        tail = midpt(2, :);
+    if (pdist([arrowCentroids(i, :); arrowBBMidpt(1, :)], 'euclidean') <= pdist([arrowCentres(i, :); arrowBBMidpt(1, :)], 'euclidean'))
+        arrowHead = arrowBBMidpt(1, :);
+        arrowTail = arrowBBMidpt(2, :);
     else
-        head = midpt(2, :);
-        tail = midpt(1, :);
+        arrowHead = arrowBBMidpt(2, :);
+        arrowTail = arrowBBMidpt(1, :);
     end
-    plot(head(:, 1), head(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
-    plot(tail(:, 1), tail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
-    midpts = [midpts; midpt];
-    heads = [heads; head];
-    tails = [tails; tail];
+    plot(arrowHead(:, 1), arrowHead(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+    plot(arrowTail(:, 1), arrowTail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+    arrowBBsMidpts = [arrowBBsMidpts; arrowBBMidpt];
+    arrowHeads = [arrowHeads; arrowHead];
+    arrowTails = [arrowTails; arrowTail];
 end
 
 %%
 
-mids = [];
-for i=1:size(stats,1) %clockwise
-    Boxx = stats(i).BoundingBox;
+shapeBBsMidpts = [];
 
-    mid1 = [Boxx(1) + 0.5*Boxx(3), Boxx(2)];
-    mid2 = [Boxx(1) + Boxx(3), Boxx(2) + 0.5*Boxx(4)];
-    mid3 = [Boxx(1) + 0.5*Boxx(3), Boxx(2) + Boxx(4)];
-    mid4 = [Boxx(1), Boxx(2) + 0.5*Boxx(4)];
-    mids = [mids; mid1; mid2; mid3; mid4];
+for i=1:n_shapeLabels %clockwise
+    
+    shapeBBs= shapeProps(i).BoundingBox;
+
+    shapeBBsMidpt1 = [shapeBBs(1) + 0.5*shapeBBs(3), shapeBBs(2)];
+    shapeBBsMidpt2 = [shapeBBs(1) + shapeBBs(3), shapeBBs(2) + 0.5*shapeBBs(4)];
+    shapeBBsMidpt3 = [shapeBBs(1) + 0.5*shapeBBs(3), shapeBBs(2) + shapeBBs(4)];
+    shapeBBsMidpt4 = [shapeBBs(1), shapeBBs(2) + 0.5*shapeBBs(4)];
+    shapeBBsMidpts = [shapeBBsMidpts; shapeBBsMidpt1; shapeBBsMidpt2; shapeBBsMidpt3; shapeBBsMidpt4];
 end
-figure;imshow(shps);
+
+figure;imshow(shapesIm);
 hold on;
-plot(mids(:, 1), mids(:, 2), 'r.');
+plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
 
 %%
 allheads = [];
 alltails = [];
-for i=1:size(heads, 1)
+for i=1:size(arrowHeads, 1)
     distances = [];
-    for j=1:size(mids, 1)
-        distance = pdist([heads(i, 1), heads(i, 2); mids(j, 1), mids(j, 2)],'euclidean');
+    for j=1:size(shapeBBsMidpts, 1)
+        distance = pdist([arrowHeads(i, 1), arrowHeads(i, 2); shapeBBsMidpts(j, 1), shapeBBsMidpts(j, 2)],'euclidean');
         distances = [distances; distance];
     end
     [~, minidx] = min(distances(:));
     hold on;
-    plot(mids(minidx, 1), mids(minidx, 2), 'g*');
-    plot(heads(i, 1), heads(i, 2), 'b*');
-    allheads = [heads] 
+%     plot(mids(minidx, 1), mids(minidx, 2), 'g*');
+%     plot(heads(i, 1), heads(i, 2), 'b*');
+    allheads = [allheads;  shapeBBsMidpts(minidx, :)];
+    alltails = [alltails; arrowTails(i, :)];
 end
+hold on;
+plot(allheads(:, 1), allheads(:, 2), 'r*');
+plot(alltails(:, 1), alltails(:, 2), 'y*');
 
-%%
+arrow('Start', alltails(:, :), 'Stop', allheads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
+
+%% Plot Circles
+circleCentres = shapeCentroids(isShapeCircle,:);
+radii = shapePerimeters(isShapeCircle,:)./(2*pi);
+viscircles(circleCentres,radii,'Color','w');
+
+%% Plot Rectangles
