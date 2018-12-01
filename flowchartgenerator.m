@@ -298,4 +298,7 @@ end
 hold on;
 plot(allheads(:, 1), allheads(:, 2), 'r*');
 plot(alltails(:, 1), alltails(:, 2), 'y*');
+
+arrow('Start', alltails(:, :), 'Stop', allheads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
+
 %%
