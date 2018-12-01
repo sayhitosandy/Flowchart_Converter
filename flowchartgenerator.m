@@ -264,8 +264,8 @@ for i=1:n_shapeLabels %clockwise
 end
 
 figure;imshow(shapesIm);
-% hold on;
-% plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
+hold on;
+plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
 
 arrowHeads = [];
 arrowTails = [];
@@ -286,20 +286,22 @@ for i = 1:size(allArrowHeads, 1)
     arrowTails = [arrowTails; allArrowTails(i, :)];
 end
 
-% hold on;
-% plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
-% plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
-
-%% Plot Arrows
-
-arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
 hold on;
+plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
+plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
+
+hold on;
+% arrow(ax);
+arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
 
 %% Plot Circles
 
+% figure; 
+% ax = gca;
+% ax.YDir = 'reverse';
 circleCentres = shapeCentroids(isShapeCircle,:);
 circleRadii = shapePerimeters(isShapeCircle,:)./(2*pi);
-viscircles(circleCentres, circleRadii, 'Color', 'w');
+viscircles(circleCentres, circleRadii, 'Color', 'k');
 
 %% Plot Rectangles
 
@@ -307,7 +309,7 @@ rectsBBs = shapeBBs(isShapeRect, :);
 
 for i = 1:size(rectsBBs, 1)
     rectangle('Position', [rectsBBs(i,1) rectsBBs(i,2)...
-        rectsBBs(i,3) rectsBBs(i,4)], 'EdgeColor','w',...
+        rectsBBs(i,3) rectsBBs(i,4)], 'EdgeColor','k',...
     'LineWidth',3);
     hold on;
 end
@@ -318,10 +320,16 @@ hold on;
 diadsBBs = shapeBBs(isShapeDiad, :);
 
 for i = 1:size(diadsBBs,1)
-    p = polyshape([diadsBBs(i,1)+ 0.5*diadsBBs(i,3) diadsBBs(i,1)+diadsBBs(i,3) ...
+    patch([diadsBBs(i,1)+ 0.5*diadsBBs(i,3) diadsBBs(i,1)+diadsBBs(i,3) ...
         diadsBBs(i,1)+0.5*diadsBBs(i,3) diadsBBs(i,1) ],...
         [diadsBBs(i,2) diadsBBs(i,2)+0.5*diadsBBs(i,4) ...
-        diadsBBs(i,2)+diadsBBs(i,4) diadsBBs(i,2)+0.5*diadsBBs(i,4) ]);
-    plot(p,'EdgeColor','w','LineWidth',3)
+        diadsBBs(i,2)+diadsBBs(i,4) diadsBBs(i,2)+0.5*diadsBBs(i,4) ], 'w', 'EdgeColor', 'k', 'LineWidth',3);
+%     plot(p,'EdgeColor','w','LineWidth',3)
     hold on;
 end
+
+%% Plot Arrows
+
+% hold on;
+% arrow(ax);
+% arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'k', 'FaceColor','k');

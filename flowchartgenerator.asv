@@ -181,13 +181,14 @@ imwrite(shapesIm, outPath);
 %% Decompose Shapes into Circles, Rectangles and Diamonds
 
 [shapeLabels,n_shapeLabels] = bwlabel(shapesIm);
-figure; imagesc(shapeLabels); axis equal;
+% figure; imagesc(shapeLabels); axis equal;
 
 shapeProps = regionprops(shapeLabels, 'all');
 
 shapeCentroids = cat(1, shapeProps.Centroid);
 shapePerimeters = cat(1, shapeProps.Perimeter);
 shapeArea = cat(1, shapeProps.ConvexArea);
+shapeBBs = cat(1, shapeProps.BoundingBox);
 
 circleAreaRatio = (shapePerimeters.^2)./(4*pi*shapeArea);  %circularity metric
 rectAreaRatio = NaN(n_shapeLabels,1);
@@ -200,14 +201,14 @@ end
 
 isShapeCircle = (circleAreaRatio < 1.1);
 isShapeRect = (rectAreaRatio > 0.75);
-isShapeRect = isShapeRect .* ~isShapeCircle;
+isShapeRect = logical(isShapeRect .* ~isShapeCircle);
 isShapeDiad = (rectAreaRatio <= 0.75);
-isShapeDiad = isShapeDiad .* ~isShapeCircle;
+isShapeDiad = logical(isShapeDiad .* ~isShapeCircle);
 
 %% Find Arrow Orientation, Arrow Head and Arrow Tail
 
 [arrowLabels, n_arrowLabels] = bwlabel(arrowsIm);
-figure; imagesc(arrowLabels); axis equal;
+% figure; imagesc(arrowLabels); axis equal;
 
 arrowProps = regionprops(arrowLabels, 'all');
 
@@ -215,17 +216,17 @@ arrowCentroids = cat(1, arrowProps.Centroid);
 arrowBBs = cat(1, arrowProps.BoundingBox);
 arrowCentres = [arrowBBs(:, 1) + 0.5*arrowBBs(:, 3), arrowBBs(:, 2) + 0.5*arrowBBs(:, 4)];
 
-figure; imshow(arrowsIm);
-hold on;
-plot(arrowCentres(:, 1), arrowCentres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
-plot(arrowCentroids(:, 1), arrowCentroids(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
+% figure; imshow(arrowsIm);
+% hold on;
+% plot(arrowCentres(:, 1), arrowCentres(:, 2), 'r*', 'LineWidth', 2, 'MarkerSize', 5);
+% plot(arrowCentroids(:, 1), arrowCentroids(:, 2), 'b*', 'LineWidth', 2, 'MarkerSize', 5);
 
 arrowBBsMidpts = [];
-arrowHeads = [];
-arrowTails = [];
+allArrowHeads = [];
+allArrowTails = [];
 
 for i = 1:n_arrowLabels
-    hold on;
+%     hold on;
     arrowOrient = arrowProps(i).Orientation;
     if (abs(abs(arrowOrient)-90) > abs(arrowOrient))
         arrowBBMidpt = [arrowBBs(i, 1), arrowCentres(i, 2);  arrowBBs(i, 1) + arrowBBs(i, 3), arrowCentres(i, 2)];
@@ -240,57 +241,95 @@ for i = 1:n_arrowLabels
         arrowHead = arrowBBMidpt(2, :);
         arrowTail = arrowBBMidpt(1, :);
     end
-    plot(arrowHead(:, 1), arrowHead(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
-    plot(arrowTail(:, 1), arrowTail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
+%     plot(arrowHead(:, 1), arrowHead(:, 2), 'g*', 'LineWidth', 2, 'MarkerSize', 5);
+%     plot(arrowTail(:, 1), arrowTail(:, 2), 'y*', 'LineWidth', 2, 'MarkerSize', 5);
     arrowBBsMidpts = [arrowBBsMidpts; arrowBBMidpt];
-    arrowHeads = [arrowHeads; arrowHead];
-    arrowTails = [arrowTails; arrowTail];
+    allArrowHeads = [allArrowHeads; arrowHead];
+    allArrowTails = [allArrowTails; arrowTail];
 end
 
-%%
+%% Find Closest Shape to Arrow Head
 
 shapeBBsMidpts = [];
 
 for i=1:n_shapeLabels %clockwise
     
-    shapeBBs= shapeProps(i).BoundingBox;
+    shapeBB= shapeProps(i).BoundingBox;
 
-    shapeBBsMidpt1 = [shapeBBs(1) + 0.5*shapeBBs(3), shapeBBs(2)];
-    shapeBBsMidpt2 = [shapeBBs(1) + shapeBBs(3), shapeBBs(2) + 0.5*shapeBBs(4)];
-    shapeBBsMidpt3 = [shapeBBs(1) + 0.5*shapeBBs(3), shapeBBs(2) + shapeBBs(4)];
-    shapeBBsMidpt4 = [shapeBBs(1), shapeBBs(2) + 0.5*shapeBBs(4)];
-    shapeBBsMidpts = [shapeBBsMidpts; shapeBBsMidpt1; shapeBBsMidpt2; shapeBBsMidpt3; shapeBBsMidpt4];
+    shapeBBMidpt1 = [shapeBB(1) + 0.5*shapeBB(3), shapeBB(2)];
+    shapeBBMidpt2 = [shapeBB(1) + shapeBB(3), shapeBB(2) + 0.5*shapeBB(4)];
+    shapeBBMidpt3 = [shapeBB(1) + 0.5*shapeBB(3), shapeBB(2) + shapeBB(4)];
+    shapeBBMidpt4 = [shapeBB(1), shapeBB(2) + 0.5*shapeBB(4)];
+    shapeBBsMidpts = [shapeBBsMidpts; shapeBBMidpt1; shapeBBMidpt2; shapeBBMidpt3; shapeBBMidpt4];
 end
 
 figure;imshow(shapesIm);
-hold on;
-plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
+ax = gca
+% hold on;
+% plot(shapeBBsMidpts(:, 1), shapeBBsMidpts(:, 2), 'r.');
 
-%%
-allheads = [];
-alltails = [];
-for i=1:size(arrowHeads, 1)
-    distances = [];
-    for j=1:size(shapeBBsMidpts, 1)
-        distance = pdist([arrowHeads(i, 1), arrowHeads(i, 2); shapeBBsMidpts(j, 1), shapeBBsMidpts(j, 2)],'euclidean');
-        distances = [distances; distance];
+arrowHeads = [];
+arrowTails = [];
+
+for i = 1:size(allArrowHeads, 1)
+    arr_shape_dists = [];
+    
+    for j = 1:size(shapeBBsMidpts, 1)
+        arr_shape_dist = pdist([allArrowHeads(i, 1), allArrowHeads(i, 2); shapeBBsMidpts(j, 1), shapeBBsMidpts(j, 2)],'euclidean');
+        arr_shape_dists = [arr_shape_dists; arr_shape_dist];
     end
-    [~, minidx] = min(distances(:));
-    hold on;
+    
+    [~, minidx] = min(arr_shape_dists(:));
+%     hold on;
 %     plot(mids(minidx, 1), mids(minidx, 2), 'g*');
 %     plot(heads(i, 1), heads(i, 2), 'b*');
-    allheads = [allheads;  shapeBBsMidpts(minidx, :)];
-    alltails = [alltails; arrowTails(i, :)];
+    arrowHeads = [arrowHeads;  shapeBBsMidpts(minidx, :)];
+    arrowTails = [arrowTails; allArrowTails(i, :)];
 end
-hold on;
-plot(allheads(:, 1), allheads(:, 2), 'r*');
-plot(alltails(:, 1), alltails(:, 2), 'y*');
 
-arrow('Start', alltails(:, :), 'Stop', allheads(:, :), 'EdgeColor', 'w', 'FaceColor','w');
+% hold on;
+% plot(arrowHeads(:, 1), arrowHeads(:, 2), 'r*');
+% plot(arrowTails(:, 1), arrowTails(:, 2), 'y*');
+
 
 %% Plot Circles
+
+figure; 
+ax = gca;
+ax.YDir = 'reverse';
+ax.XLim = [0 348];
+ax.YLim = [0 nrow];
 circleCentres = shapeCentroids(isShapeCircle,:);
-radii = shapePerimeters(isShapeCircle,:)./(2*pi);
-viscircles(circleCentres,radii,'Color','w');
+circleRadii = shapePerimeters(isShapeCircle,:)./(2*pi);
+viscircles(ax, circleCentres, circleRadii, 'Color', 'k');
 
 %% Plot Rectangles
+
+rectsBBs = shapeBBs(isShapeRect, :);
+
+for i = 1:size(rectsBBs, 1)
+    rectangle(ax, 'Position', [rectsBBs(i,1) rectsBBs(i,2)...
+        rectsBBs(i,3) rectsBBs(i,4)], 'EdgeColor','k',...
+    'LineWidth',3);
+    hold on;
+end
+
+%% Plot Diamonds
+
+hold on;
+diadsBBs = shapeBBs(isShapeDiad, :);
+
+for i = 1:size(diadsBBs,1)
+    patch(ax, [diadsBBs(i,1)+ 0.5*diadsBBs(i,3) diadsBBs(i,1)+diadsBBs(i,3) ...
+        diadsBBs(i,1)+0.5*diadsBBs(i,3) diadsBBs(i,1) ],...
+        [diadsBBs(i,2) diadsBBs(i,2)+0.5*diadsBBs(i,4) ...
+        diadsBBs(i,2)+diadsBBs(i,4) diadsBBs(i,2)+0.5*diadsBBs(i,4) ], 'w', 'EdgeColor', 'k', 'LineWidth',3);
+%     plot(p,'EdgeColor','w','LineWidth',3)
+    hold on;
+end
+
+%% Plot Arrows
+
+hold on;
+arrow(ax);
+arrow('Start', arrowTails(:, :), 'Stop', arrowHeads(:, :), 'EdgeColor', 'k', 'FaceColor','k');
