@@ -4,7 +4,7 @@ clc
 clear
 
 %% Initialize files and folders
-imgNo = '6'; %Input Image Number
+imgNo = '9'; %Input Image Number
 inpFile = strcat(imgNo, '.jpg'); %Input File
 inpFolder = './Inputs'; %Input Folder
 outFolder = strcat('./Outputs/', imgNo); %Output Folder
@@ -168,7 +168,14 @@ arrIm = cleanedRotatedIm - bwIm; %Remove shapes (Only arrows)
 arrIm = imbinarize(arrIm);
 
 arrowsIm = bwareaopen(arrIm, 20); %Remove noise
-figure, imshow(arrowsIm);
+CC_arrows = bwconncomp(arrowsIm);
+S_arrows = regionprops(CC_arrows, 'Area');
+L_arrows = labelmatrix(CC_arrows);
+arrowsIm_new = ismember(L_arrows, find([S_arrows.Area] >= 10*nrows/100));
+%Keep only those regions which are of area more than specified
+
+figure; imshow(arrowsIm_new);
+arrowsIm = arrowsIm_new;
 title('Only Arrows');
 outFile = 'Arrows.jpg';
 outPath = fullfile(outFolder, outFile);
@@ -181,7 +188,6 @@ title('Only Shapes');
 outFile = 'Shapes.jpg';
 outPath = fullfile(outFolder, outFile);
 saveas(gcf, outPath);
-
 
 %% Decompose Shapes into Circles, Rectangles and Diamonds
 
