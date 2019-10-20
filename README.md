@@ -1,6 +1,12 @@
 # Automatic Handwritten Flowchart Converter
 
-A flowchart is one of the most commonly used methods to chalk out a plan of action, or the steps in a process, or an algorithm. We automated the process of converting a handwritten draft of a flowchart into a graph object using image-processing techniques in MATLAB. We followed a methodology as follows:
+A flowchart is one of the most commonly used methods to chalk out a plan of action, or the steps in a process, or an algorithm. We automated the process of converting a handwritten draft of a flowchart into a graph object using image-processing techniques in MATLAB.
+
+#### Links: 
+1. [*Proposal*](https://github.com/sayhitosandy/Flowchart_Converter/blob/master/Proposal.pdf)
+2. [*Inputs*](https://github.com/sayhitosandy/Flowchart_Converter/tree/master/Inputs)
+3. [*Outputs*](https://github.com/sayhitosandy/Flowchart_Converter/tree/master/Outputs)
+4. [*Presentation*](https://github.com/sayhitosandy/Flowchart_Converter/blob/master/IA%20Project%20Report%20PPT.pdf)
 
 #### Methodology and Image Processing Techniques:
 1. Take a jpg image from a mobile camera, as an RGB, and convert to grayscale.
@@ -17,12 +23,6 @@ A flowchart is one of the most commonly used methods to chalk out a plan of acti
   - Using the information about head and tail coordinates of the arrows, we used this to reconstruct arrows in their proper positions.
   - Using different tools of MATLAB, the different shapes are reconstructed.
   - The final flowchart can now be used in place of the handwritten version. It is comparatively much neater, easily portable, and can be converted into objects for extending usage. 
-
-#### Links: 
-1. [*Proposal*](https://github.com/sayhitosandy/Flowchart_Converter/blob/master/Proposal.pdf)
-2. [*Inputs*](https://github.com/sayhitosandy/Flowchart_Converter/tree/master/Inputs)
-3. [*Outputs*](https://github.com/sayhitosandy/Flowchart_Converter/tree/master/Outputs)
-4. [*Presentation*](https://github.com/sayhitosandy/Flowchart_Converter/blob/master/IA%20Project%20Report%20PPT.pdf)
 
 #### References:
 1. http://ceur-ws.org/Vol-1178/CLEF2012wn-CLEFIP-MorzingerEt2012.pdf
